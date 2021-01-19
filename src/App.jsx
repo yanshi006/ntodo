@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import './App.css';
+import Todo from "./pages/Todo";
 
 const App = () => {
 
@@ -12,14 +13,15 @@ const App = () => {
 
   const deleteTodo = (index) => {
     setTodoList(
-      todoList.filter((idx) => idx !== index)
+      // _ これはmapメッソドのkeyに何か関係があるのかもしれない。これがなかったら削除ボタンを押しても消えなかった。
+      todoList.filter((_,idx) => idx !== index)
     )
   }
 
   return (
     <div className='App'>
       <input type="text" value={input} onChange={(e) => setInput(e.target.value)} />
-      <button>追加</button>
+      <button onClick={() => addTodo()}>追加</button>
       <Todo todoList={todoList} deleteTodo={deleteTodo} />
     </div>
   )
