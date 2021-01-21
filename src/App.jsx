@@ -30,6 +30,8 @@ const App = () => {
       setTodoList(resTodo.data().tasks);
       const resFinishedTodo = await db.collection('todoList').doc('finishedTodo').get();
       setFinishedList(resFinishedTodo.data().tasks);
+      //Loading終了
+      setIsLoading(false);
     })()//<-最後のこれは何なのか
   }, [db])
 
@@ -61,14 +63,19 @@ const App = () => {
     }
   }, [db, finishedList, isChangedFinished])
 
-  const addTodo = () => {
+  const addTodo = async () => {
     if (!!input) {
+      //Todoが変化したのでtrue
+      setIsChangedTodo(true);
       setTodoList([...todoList, input]);
       setInput('');
     }
   }
+
   //この関数は、未完了リストで削除ボタンが押した時のリスト
   const deleteTodo = (index) => {
+    //Todoが変化したのでtrue
+    setIsChangedTodo(true);
     setTodoList(
       // _ これはmapメッソドのkeyに何か関係があるのかもしれない。これがなかったら削除ボタンを押しても消えなかった。
       todoList.filter((_, idx) => idx !== index)
@@ -76,12 +83,17 @@ const App = () => {
   }
   //この関数は、完了済みリストで戻すボタンが押ししたときのリスト
   const deleteFinishTodo = (index) => {
+    //完了済みTodoが変化したのでtrue
+    setIsChangedFinished(true);
     setFinishedList(
       finishedList.filter((_, idx) => idx !== index)
     )
   }
   //この関数は、未完了リストで完了済みにするボタンを押した時の完了済みリストのリスト
   const finishTodo = (index) => {
+    //Todo、完了済みTodoがともに変化したのでtrue
+    setIsChangedTodo(true);
+    setIsChangedFinished(true);
     deleteTodo(index);
     setFinishedList(
       //完了済みリストの新しいリスト
@@ -90,7 +102,10 @@ const App = () => {
   }
   //この関数は、完了済みリストで戻るボタンを押した時の未完了リストのリスト
   const reopenTodo = (index) => {
-    deleteFinishTodo();
+    //Todo、完了済みTodoがともに変化したのでtrue
+    setIsChangedTodo(true);
+    setIsChangedFinished(true);
+    deleteFinishTodo(index);
     setTodoList(
       //未完了リストの新しいリスト
       [...todoList, finishedList.find((_, idx) => idx === index)]
@@ -102,16 +117,21 @@ const App = () => {
       <Title>Todo App</Title>
       <input type="text" value={input} onChange={(e) => setInput(e.target.value)} />
       <button onClick={() => addTodo()}>追加</button>
-      <TodoContainer>
-        <SubContainer>
-          <SubTitle>未完了</SubTitle>
-          <Todo todoList={todoList} deleteTodo={deleteTodo} changeTodoStatus={finishTodo} type='todo' />
-        </SubContainer>
-        <SubContainer>
-          <SubTitle>完了済み</SubTitle>
-          <Todo todoList={finishedList} deleteTodo={deleteFinishTodo} changeTodoStatus={reopenTodo} type='done' />
-        </SubContainer>
-      </TodoContainer>
+      {
+        isLoading ?
+          <Loading>loading</Loading>
+          :
+          <TodoContainer>
+            <SubContainer>
+              <SubTitle>未完了</SubTitle>
+              <Todo todoList={todoList} deleteTodo={deleteTodo} changeTodoStatus={finishTodo} type='todo' />
+            </SubContainer>
+            <SubContainer>
+              <SubTitle>完了済み</SubTitle>
+              <Todo todoList={finishedList} deleteTodo={deleteFinishTodo} changeTodoStatus={reopenTodo} type='done' />
+            </SubContainer>
+          </TodoContainer>
+      }
     </div>
   )
 }
@@ -137,4 +157,8 @@ const TodoContainer = styled.div`
   width: 80%;
   margin: 0 auto;
   justify-content: space-between;
+`
+
+const Loading = styled.div`
+  margin: 40px auto;
 `
