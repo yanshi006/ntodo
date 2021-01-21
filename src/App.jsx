@@ -6,16 +6,17 @@ import firebase from "firebase";
 import "firebase/firestore";
 
 const App = () => {
-
+  //input要素の入力値を管理している
   const [input, setInput] = useState('');
+  //未完了のリストを管理している
   const [todoList, setTodoList] = useState([]);
-  //完了済みのリスト
+  //完了済みのリストを管理している
   const [finishedList, setFinishedList] = useState([]);
-  //Loadingを判定する変数
+  //Loading中かどうかを判定する変数
   const [isLoading, setIsLoading] = useState(true);
-  // 未完了のTodoが変化したかを監視する変数
+  //未完了のTodoが変化したかを監視する変数
   const [isChangedTodo, setIsChangedTodo] = useState(false);
-  // 完了済みのTodoが変化したかを監視する変数
+  //完了済みのTodoが変化したかを監視する変数
   const [isChangedFinished, setIsChangedFinished] = useState(false);
 
   //これはデータベース
@@ -24,29 +25,36 @@ const App = () => {
   //firebaseからデータを取得してくるので、useEffectを使用する。
   // 一番最初にfirebaseからデータを取得してきて、stateに入れる。
   useEffect(() => {
+    //この非同期処理はどういう意味なのか分からなかった
     (async () => {
+      //この変数は、firebaseのtidoListコレクションの中のtodoドキュメントを取得している
       const resTodo = await db.collection('todoList').doc('todo').get();
-      //stateに入れている
+      //tasksフィールドのデータをstateに入れている(未完了リスト)
       setTodoList(resTodo.data().tasks);
+      //この変数は、firebaseのtodoListコレクションの中のfinishedTodoドキュメントを取得している
       const resFinishedTodo = await db.collection('todoList').doc('finishedTodo').get();
+      //tasksフィールドのデータをstateに入れている(完了済みリスト)
       setFinishedList(resFinishedTodo.data().tasks);
-      //Loading終了
+      //Loadingが終了したから、falseにしている
       setIsLoading(false);
     })()//<-最後のこれは何なのか
+    //dbに変更があればレンダーする。 dbとは何か
   }, [db])
 
   useEffect(() => {
     if (isChangedTodo) {
       (async () => {
         // 通信をするのでLoadingをtrue
-        //なんでtrueにするのか分からない
         setIsLoading(true);
-        const docRef = await db.collection('todoList').doc('todo');
+      //この変数は、firebaseのtodoListコレクションの中のtodoドキュメントを指定している。取得はしていない。
+      const docRef = await db.collection('todoList').doc('todo');
+        //firebaseのtasksデータにtodoListコレクションを表示している
         docRef.update({ tasks: todoList });
-        // Loading終了
-        setIsLoading(false);
+      //Loadingが終了したから、falseにしている
+      setIsLoading(false);
       })()//<-最後のこれは何なのか
     }
+    //これは、この3つのうちのどれかが変更したらレンダーするのか、それとも、この3つ全部が変更されたらなのか
   }, [todoList, isChangedTodo, db])
 
   useEffect(() => {
@@ -64,6 +72,7 @@ const App = () => {
   }, [db, finishedList, isChangedFinished])
 
   const addTodo = async () => {
+    //inputの値はfalsyだから、!!だったらfalseではないのか
     if (!!input) {
       //Todoが変化したのでtrue
       setIsChangedTodo(true);
