@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './App.css';
 import Todo from "./pages/Todo";
 import styled from "styled-components";
+import firebase from "firebase";
+import "firebase/firestore";
 
 const App = () => {
 
@@ -9,6 +11,55 @@ const App = () => {
   const [todoList, setTodoList] = useState([]);
   //完了済みのリスト
   const [finishedList, setFinishedList] = useState([]);
+  //Loadingを判定する変数
+  const [isLoading, setIsLoading] = useState(true);
+  // 未完了のTodoが変化したかを監視する変数
+  const [isChangedTodo, setIsChangedTodo] = useState(false);
+  // 完了済みのTodoが変化したかを監視する変数
+  const [isChangedFinished, setIsChangedFinished] = useState(false);
+
+  //これはデータベース
+  const db = firebase.firestore();
+
+  //firebaseからデータを取得してくるので、useEffectを使用する。
+  // 一番最初にfirebaseからデータを取得してきて、stateに入れる。
+  useEffect(() => {
+    (async () => {
+      const resTodo = await db.collection('todoList').doc('todo').get();
+      //stateに入れている
+      setTodoList(resTodo.data().tasks);
+      const resFinishedTodo = await db.collection('todoList').doc('finishedTodo').get();
+      setFinishedList(resFinishedTodo.data().tasks);
+    })()//<-最後のこれは何なのか
+  }, [db])
+
+  useEffect(() => {
+    if (isChangedTodo) {
+      (async () => {
+        // 通信をするのでLoadingをtrue
+        //なんでtrueにするのか分からない
+        setIsLoading(true);
+        const docRef = await db.collection('todoList').doc('todo');
+        docRef.update({ tasks: todoList });
+        // Loading終了
+        setIsLoading(false);
+      })()//<-最後のこれは何なのか
+    }
+  }, [todoList, isChangedTodo, db])
+
+  useEffect(() => {
+    if (isChangedFinished) {
+      (async () => {
+        // 通信をするのでLoadingをtrue
+        //なんでtrueにするのか分からない
+        setIsLoading(true);
+        const docRef = await db.collection('todoList').doc('finishedTodo');
+        docRef.update({ tasks: finishedList });
+        // Loading終了
+        setIsLoading(false);
+      })()
+    }
+  }, [db, finishedList, isChangedFinished])
 
   const addTodo = () => {
     if (!!input) {
