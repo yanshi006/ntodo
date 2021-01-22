@@ -14,9 +14,11 @@ const App = () => {
   const [finishedList, setFinishedList] = useState([]);
   //Loading中かどうかを判定する変数
   const [isLoading, setIsLoading] = useState(true);
-  //未完了のTodoが変化したかを監視する変数
+  //未完了のTodoリストが変化したかを監視する変数
+  //これは何のために監視しているのか
   const [isChangedTodo, setIsChangedTodo] = useState(false);
-  //完了済みのTodoが変化したかを監視する変数
+  //完了済みのTodoリストが変化したかを監視する変数
+  //これは何のために監視しているのか
   const [isChangedFinished, setIsChangedFinished] = useState(false);
 
   //これはデータベース
@@ -38,85 +40,94 @@ const App = () => {
       //Loadingが終了したから、falseにしている
       setIsLoading(false);
     })()//<-最後のこれは何なのか
-    //dbに変更があればレンダーする。 dbとは何か
+    //dbに変更があればレンダーする。 dbとは何か。レンダリングしたらどうなるのか
   }, [db])
 
   useEffect(() => {
+    //もし未完了リストが変化したら...
     if (isChangedTodo) {
       (async () => {
         // 通信をするのでLoadingをtrue
         setIsLoading(true);
-      //この変数は、firebaseのtodoListコレクションの中のtodoドキュメントを指定している。取得はしていない。
-      const docRef = await db.collection('todoList').doc('todo');
-        //firebaseのtasksデータにtodoListコレクションを表示している
+        //この変数は、firebaseのtodoListコレクションの中のtodoドキュメントを指定している。取得はしていない。
+        const docRef = await db.collection('todoList').doc('todo');
+        //firebaseのtodoドキュメントのtasksデータに未完了リストのstateのtodoListを表示している
+        //このようにfirebaseにupdateすることで、更新しても消えないようになっている。
         docRef.update({ tasks: todoList });
-      //Loadingが終了したから、falseにしている
-      setIsLoading(false);
+        //Loadingが終了したから、falseにしている
+        setIsLoading(false);
       })()//<-最後のこれは何なのか
     }
-    //これは、この3つのうちのどれかが変更したらレンダーするのか、それとも、この3つ全部が変更されたらなのか
+    //これは、この3つのうちのどれかが変更したらレンダーするのか、それとも、この3つ全部が変更されたらなのか。レンダリングしたらどうなるのか
   }, [todoList, isChangedTodo, db])
 
   useEffect(() => {
+    //もし完了済みリストが変化したら...
     if (isChangedFinished) {
       (async () => {
         // 通信をするのでLoadingをtrue
-        //なんでtrueにするのか分からない
         setIsLoading(true);
+        //この変数は、firebaseのtodoListコレクションの中のfinishedTodoドキュメントを指定している。取得はしていない。
         const docRef = await db.collection('todoList').doc('finishedTodo');
+        //firebaseのfinishedTodoドキュメントのtasksデータに完了済みリストのstateのfinishedListを表示している
+        //このようにfirebaseにupdateすることで、更新しても消えないようになっている。
         docRef.update({ tasks: finishedList });
-        // Loading終了
+        // Loadingが終了したから、falseにしている。
         setIsLoading(false);
       })()
     }
+    //これは、この3つのうちのどれかが変更したらレンダーするのか、それとも、この3つ全部が変更されたらなのか。レンダリングしたらどうなるのか
   }, [db, finishedList, isChangedFinished])
 
   const addTodo = async () => {
-    //inputの値はfalsyだから、!!だったらfalseではないのか
+    //初期のinputの値はfalsyの値だから、!!だったらfalseになるのではないのか
+    //falseの条件式の時に{}の中は動くのか。
+    //このif文が無くても正常に動く。
     if (!!input) {
-      //Todoが変化したのでtrue
+      //Todo(未完了リスト)が変化したのでtrue
       setIsChangedTodo(true);
       setTodoList([...todoList, input]);
       setInput('');
     }
   }
 
-  //この関数は、未完了リストで削除ボタンが押した時のリスト
+  //この関数は、未完了リストで削除ボタンが押された時のリスト
   const deleteTodo = (index) => {
-    //Todoが変化したのでtrue
+    //Todo(未完了リスト)が変化したのでtrue
     setIsChangedTodo(true);
     setTodoList(
-      // _ これはmapメッソドのkeyに何か関係があるのかもしれない。これがなかったら削除ボタンを押しても消えなかった。
+      //この _ は何の意味があるのか。これがなかったら削除ボタンを押しても消えなかった。
       todoList.filter((_, idx) => idx !== index)
     )
   }
-  //この関数は、完了済みリストで戻すボタンが押ししたときのリスト
+
+  //この関数は、完了済みリストで削除ボタンが押されたとき完了済みリストのリスト
   const deleteFinishTodo = (index) => {
-    //完了済みTodoが変化したのでtrue
+    //完了済みTodo(完了済みリスト)が変化したのでtrue
     setIsChangedFinished(true);
     setFinishedList(
+      //この _ は何の意味があるのか。
       finishedList.filter((_, idx) => idx !== index)
     )
   }
-  //この関数は、未完了リストで完了済みにするボタンを押した時の完了済みリストのリスト
+
+  //この関数は、未完了リストで完了済みにするボタンが押された時の完了済みリストのリスト
   const finishTodo = (index) => {
-    //Todo、完了済みTodoがともに変化したのでtrue
+    //Todo(未完了リスト)、完了済み(完了済みリスト)Todoがともに変化したのでtrue
     setIsChangedTodo(true);
     setIsChangedFinished(true);
     deleteTodo(index);
     setFinishedList(
-      //完了済みリストの新しいリスト
       [...finishedList, todoList.find((_, idx) => idx === index)]
     )
   }
-  //この関数は、完了済みリストで戻るボタンを押した時の未完了リストのリスト
+  //この関数は、完了済みリストで戻るボタンが押された時の未完了リストのリスト
   const reopenTodo = (index) => {
-    //Todo、完了済みTodoがともに変化したのでtrue
+    //Todo(未完了リスト)、完了済み(完了済みリスト)Todoがともに変化したのでtrue
     setIsChangedTodo(true);
     setIsChangedFinished(true);
     deleteFinishTodo(index);
     setTodoList(
-      //未完了リストの新しいリスト
       [...todoList, finishedList.find((_, idx) => idx === index)]
     )
   }
@@ -126,6 +137,7 @@ const App = () => {
       <Title>Todo App</Title>
       <input type="text" value={input} onChange={(e) => setInput(e.target.value)} />
       <button onClick={() => addTodo()}>追加</button>
+      {/* 16行目のconst [isLoading, setIsLoading] = useState(true);というのは、この下の処理を書くために監視していた。 */}
       {
         isLoading ?
           <Loading>loading</Loading>

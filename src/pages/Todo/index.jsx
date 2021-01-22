@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 const Todo = ({todoList, deleteTodo, changeTodoStatus, type}) => {
   return (
+    //todoListの1つ1つをmapで回して、値とindexを引数に取っている
     todoList.map((todo,idx) => (
       <Container>
         {todo}
